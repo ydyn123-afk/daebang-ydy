@@ -1,0 +1,748 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>대방산업개발 분양대금 조회</title>
+<meta name="description" content="대방산업개발 분양대금 수납조회 시스템 (데모)">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700;800&family=Noto+Serif+KR:wght@600;700&display=swap">
+<style>
+  :root{
+    --bg:#F5F3EE;
+    --surface:#FFFFFF;
+    --surface-2:#FBFAF7;
+    --ink:#1C2B33;
+    --muted:#6B7A82;
+    --line:#E1DED4;
+    --brand:#173C4F;
+    --brand-2:#0E2733;
+    --gold:#A9823C;
+    --gold-ink:#5C4620;
+    --sage:#5C7A60;
+    --sage-bg:#EAF0E9;
+    --danger:#B14B3E;
+    --danger-bg:#F7EAE7;
+    --focus:#2E6B8C;
+    --shadow: 0 1px 2px rgba(23,60,79,.06), 0 8px 24px -12px rgba(23,60,79,.18);
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --bg:#12181C;
+      --surface:#1A2227;
+      --surface-2:#1F282D;
+      --ink:#E9EAE4;
+      --muted:#93A0A5;
+      --line:#2C363C;
+      --brand:#8FB9CE;
+      --brand-2:#B7D6E4;
+      --gold:#D3AE6B;
+      --gold-ink:#F0DEB3;
+      --sage:#8FB093;
+      --sage-bg:#1E2A20;
+      --danger:#D98A7C;
+      --danger-bg:#2E1E1B;
+      --focus:#7EC2EC;
+      --shadow: 0 1px 2px rgba(0,0,0,.3), 0 8px 28px -12px rgba(0,0,0,.55);
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg:#12181C;
+    --surface:#1A2227;
+    --surface-2:#1F282D;
+    --ink:#E9EAE4;
+    --muted:#93A0A5;
+    --line:#2C363C;
+    --brand:#8FB9CE;
+    --brand-2:#B7D6E4;
+    --gold:#D3AE6B;
+    --gold-ink:#F0DEB3;
+    --sage:#8FB093;
+    --sage-bg:#1E2A20;
+    --danger:#D98A7C;
+    --danger-bg:#2E1E1B;
+    --focus:#7EC2EC;
+    --shadow: 0 1px 2px rgba(0,0,0,.3), 0 8px 28px -12px rgba(0,0,0,.55);
+  }
+
+  *{box-sizing:border-box;}
+  html,body{background:var(--bg);}
+  body{
+    margin:0;
+    padding-inline:0;
+    color:var(--ink);
+    font-family:"Noto Sans KR","Pretendard",-apple-system,BlinkMacSystemFont,sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+  h1,h2,h3{font-family:"Noto Serif KR",serif; text-wrap:balance; margin:0;}
+  table{font-variant-numeric:tabular-nums;}
+  input,select,button{font-family:inherit;}
+
+  a{color:var(--focus);}
+
+  .wrap{max-width:1040px;margin:0 auto;padding-inline:20px;}
+
+  /* ---------- Top bar ---------- */
+  .topbar{
+    background:var(--brand);
+    color:#F3EFE4;
+    padding-block:14px;
+    padding-top:calc(14px + env(safe-area-inset-top,0px));
+  }
+  .topbar .wrap{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;}
+  .brand{display:flex;align-items:center;gap:10px;}
+  .brand .mark{
+    width:34px;height:34px;border-radius:8px;
+    background:linear-gradient(155deg,var(--gold) 0%, #8A6A2C 100%);
+    display:flex;align-items:center;justify-content:center;
+    font-family:"Noto Serif KR",serif;font-weight:700;color:#20140A;font-size:16px;
+    flex:none;
+  }
+  .brand .name{font-weight:700;font-size:16px;letter-spacing:.02em;}
+  .brand .sub{font-size:11.5px;color:#C9D7DC;margin-top:1px;}
+  .navtabs{display:flex;gap:6px;}
+  .navtab{
+    font-size:13px;padding:7px 13px;border-radius:999px;color:#DCE7EA;
+    border:1px solid rgba(255,255,255,.18);
+  }
+  .navtab.active{background:rgba(255,255,255,.14);color:#fff;font-weight:600;}
+  .navtab.soon{opacity:.55;}
+  .navtab .tag{font-size:10px;background:rgba(255,255,255,.16);padding:1px 6px;border-radius:999px;margin-left:6px;}
+
+  main{padding-block:32px 64px;}
+
+  /* ---------- Search card ---------- */
+  .search-shell{display:flex;justify-content:center;padding-top:28px;}
+  .card{
+    background:var(--surface);
+    border:1px solid var(--line);
+    border-radius:16px;
+    box-shadow:var(--shadow);
+  }
+  .search-card{width:100%;max-width:480px;padding:32px 30px 28px;}
+  .search-card h1{font-size:21px;color:var(--ink);}
+  .search-card .lead{color:var(--muted);font-size:13.5px;margin-top:8px;line-height:1.6;}
+
+  .field{margin-top:18px;}
+  .field label{display:block;font-size:12.5px;font-weight:700;color:var(--muted);margin-bottom:6px;letter-spacing:.02em;}
+  .field-row{display:flex;gap:8px;}
+  .field-row > *{flex:1;min-width:0;}
+  input[type=text],input[type=tel],input[type=date],select{
+    width:100%;padding:10px 12px;border-radius:9px;border:1px solid var(--line);
+    background:var(--surface-2);color:var(--ink);font-size:14px;
+  }
+  input:focus,select:focus,button:focus-visible{
+    outline:2px solid var(--focus); outline-offset:1px;
+  }
+  .radiogroup{display:flex;gap:8px;}
+  .radiopill{
+    flex:1;border:1px solid var(--line);border-radius:9px;padding:9px 10px;
+    display:flex;align-items:center;gap:8px;font-size:13.5px;background:var(--surface-2);cursor:pointer;
+  }
+  .radiopill input{margin:0;accent-color:var(--brand);}
+  .radiopill.checked{border-color:var(--brand);background:color-mix(in srgb, var(--brand) 8%, var(--surface-2));}
+
+  .btn{
+    appearance:none;border:none;border-radius:9px;padding:12px 16px;font-size:14.5px;font-weight:700;
+    cursor:pointer;width:100%;letter-spacing:.01em;
+  }
+  .btn-primary{background:var(--brand);color:#F4EFE2;margin-top:22px;}
+  .btn-primary:hover{background:var(--brand-2);}
+  .btn-gold{background:var(--gold);color:#241804;}
+  .btn-gold:hover{filter:brightness(1.06);}
+  .btn-ghost{background:transparent;color:var(--brand);border:1px solid var(--line);}
+  .btn-ghost:hover{background:var(--surface-2);}
+  .btn[disabled]{opacity:.55;cursor:not-allowed;}
+
+  .otp-box{margin-top:18px;border-top:1px dashed var(--line);padding-top:16px;}
+  .demo-note{
+    background:var(--sage-bg);color:var(--sage);
+    border:1px solid color-mix(in srgb, var(--sage) 35%, transparent);
+    border-radius:10px;padding:10px 12px;font-size:12.5px;line-height:1.55;margin-top:14px;
+  }
+  .demo-note b{font-weight:800;}
+  .form-error{
+    display:none;margin-top:14px;background:var(--danger-bg);color:var(--danger);
+    border:1px solid color-mix(in srgb, var(--danger) 35%, transparent);
+    border-radius:10px;padding:10px 12px;font-size:12.8px;line-height:1.5;
+  }
+  .form-error.show{display:block;}
+  .hint{font-size:11.5px;color:var(--muted);margin-top:6px;}
+
+  /* ---------- Result page ---------- */
+  #resultView{max-width:1040px;margin:0 auto;padding-inline:20px;}
+  .toolrow{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-top:26px;}
+  .toolrow .btn{width:auto;}
+  .doctitle{text-align:center;margin:26px 0 4px;}
+  .doctitle h1{font-size:26px;letter-spacing:.14em;}
+  .doctitle .asof{text-align:center;color:var(--muted);font-size:12.5px;margin-top:8px;}
+  .formula-note{text-align:right;color:var(--muted);font-size:11.5px;margin-top:-18px;margin-bottom:14px;}
+
+  .hero{
+    margin-top:20px;display:grid;grid-template-columns:repeat(4,1fr);gap:1px;
+    background:var(--line);border:1px solid var(--line);border-radius:14px;overflow:hidden;
+  }
+  .hero .tile{background:var(--surface);padding:16px 16px 14px;}
+  .hero .tile .k{font-size:11.5px;color:var(--muted);font-weight:700;letter-spacing:.02em;}
+  .hero .tile .v{font-size:19px;font-weight:800;margin-top:6px;}
+  .hero .tile .v.gold{color:var(--gold-ink);}
+  .hero .tile .v.sage{color:var(--sage);}
+  .progress{height:6px;border-radius:99px;background:var(--line);margin-top:10px;overflow:hidden;}
+  .progress > span{display:block;height:100%;background:linear-gradient(90deg,var(--gold),var(--sage));}
+
+  .section{margin-top:26px;}
+  .section h2{font-size:15px;display:flex;align-items:center;gap:9px;}
+  .section h2 .num{
+    width:22px;height:22px;border-radius:6px;background:var(--brand);color:#F4EFE2;
+    display:inline-flex;align-items:center;justify-content:center;font-size:12px;font-family:inherit;font-weight:800;
+  }
+  .section .desc{color:var(--muted);font-size:12.5px;margin:6px 0 12px 31px;}
+
+  .infogrid{
+    display:grid;grid-template-columns:repeat(4,1fr);border:1px solid var(--line);border-radius:12px;overflow:hidden;background:var(--surface);
+  }
+  .infogrid .cell{padding:11px 14px;border-bottom:1px solid var(--line);border-right:1px solid var(--line);}
+  .infogrid .cell:nth-child(4n){border-right:none;}
+  .infogrid .cell .k{font-size:11px;color:var(--muted);font-weight:700;}
+  .infogrid .cell .v{font-size:13.5px;margin-top:3px;font-weight:600;}
+  .infogrid .cell.span2{grid-column:span 2;}
+  .infogrid .cell.wide .v{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+
+  .tablewrap{overflow-x:auto;border:1px solid var(--line);border-radius:12px;background:var(--surface);}
+  table.grid{width:100%;border-collapse:collapse;font-size:13px;min-width:620px;}
+  table.grid th{
+    background:var(--sage-bg);color:var(--sage);
+    font-size:11.5px;font-weight:800;letter-spacing:.01em;
+    padding:9px 10px;border-bottom:1px solid var(--line);border-right:1px solid var(--line);white-space:nowrap;
+  }
+  table.grid th:last-child{border-right:none;}
+  table.grid td{
+    padding:8px 10px;border-bottom:1px solid var(--line);border-right:1px solid var(--line);white-space:nowrap;
+  }
+  table.grid td:last-child{border-right:none;}
+  table.grid tbody tr:last-child td{border-bottom:none;}
+  table.grid td.num,table.grid th.num{text-align:right;}
+  table.grid td.mid,table.grid th.mid{text-align:center;}
+  table.grid tr.total td{background:var(--surface-2);font-weight:800;}
+  table.grid td.zero{color:var(--muted);}
+  .badge-loan{
+    display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:99px;
+    background:var(--gold);color:#241804;font-size:10px;font-weight:900;
+  }
+
+  table.spec{width:100%;border-collapse:collapse;font-size:13.5px;}
+  table.spec th{
+    text-align:left;background:var(--sage-bg);color:var(--sage);font-size:11.5px;font-weight:800;
+    padding:9px 12px;border-bottom:1px solid var(--line);
+  }
+  table.spec td{padding:9px 12px;border-bottom:1px solid var(--line);vertical-align:top;}
+  table.spec tbody tr:last-child td{border-bottom:none;}
+  table.spec td.cat{font-weight:700;white-space:nowrap;width:34%;color:var(--brand-2);}
+  .spec-foot{font-size:11px;color:var(--muted);margin-top:8px;line-height:1.6;}
+
+  .summarybox{
+    display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:14px;
+  }
+  .sumcard{border:1px solid var(--line);border-radius:12px;background:var(--surface);padding:14px 16px;}
+  .sumcard h3{font-size:12px;color:var(--muted);font-weight:700;letter-spacing:.02em;margin-bottom:8px;}
+  .sumrow{display:flex;justify-content:space-between;padding:5px 0;font-size:13px;border-bottom:1px dashed var(--line);}
+  .sumrow:last-child{border-bottom:none;}
+  .sumrow.strong{font-weight:800;font-size:13.5px;}
+  .sumrow.strong .v{color:var(--gold-ink);}
+
+  footer{margin-top:40px;padding:20px 0 calc(20px + env(safe-area-inset-bottom,0px));text-align:center;color:var(--muted);font-size:11.5px;border-top:1px solid var(--line);}
+
+  @media (max-width:720px){
+    .infogrid{grid-template-columns:repeat(2,1fr);}
+    .infogrid .cell:nth-child(4n){border-right:1px solid var(--line);}
+    .infogrid .cell:nth-child(2n){border-right:none;}
+    .hero{grid-template-columns:repeat(2,1fr);}
+    .navtabs{order:3;width:100%;}
+    .summarybox{grid-template-columns:1fr;}
+  }
+  @media print{
+    .topbar,.toolrow,footer,.demo-note{display:none !important;}
+    body{background:#fff;}
+    .card,.tablewrap,.infogrid,.hero,.sumcard{box-shadow:none;border-color:#999;}
+  }
+
+  [hidden]{display:none !important;}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="wrap">
+    <div class="brand">
+      <div class="mark">DB</div>
+      <div>
+        <div class="name">대방산업개발</div>
+        <div class="sub">분양대금 수납조회 시스템</div>
+      </div>
+    </div>
+    <div class="navtabs">
+      <span class="navtab active">수납조회</span>
+      <span class="navtab soon">입주예약<span class="tag">준비중</span></span>
+    </div>
+  </div>
+</div>
+
+<main>
+  <!-- ============ SEARCH VIEW ============ -->
+  <div id="searchView" class="wrap">
+    <div class="search-shell">
+      <form class="card search-card" id="searchForm" autocomplete="off">
+        <h1>분양대금 납입현황 조회</h1>
+        <p class="lead">계약자(또는 공동명의자) 본인확인 후, 분양대금 납입현황과 별도계약 품목을 확인하실 수 있습니다.</p>
+        <div class="demo-note" style="margin-top:14px;"><b>[데모 모드]</b> 아래 정보로 입력해 주세요 &rarr; 성명 <b>양대방</b> · 생년월일 <b>1990-01-04</b> · 동 <b>101</b> · 호 <b>102</b> · 휴대폰번호는 아무 숫자(예: 1). 인증번호는 <b>1</b> 을 입력하면 통과됩니다.</div>
+
+        <div class="field">
+          <label for="f-site">사업지명</label>
+          <select id="f-site">
+            <option value="siheung">시흥거모1차(S-2BL) 아파트 (S22019A01)</option>
+          </select>
+        </div>
+
+        <div class="field-row">
+          <div class="field">
+            <label for="f-name">성명</label>
+            <input id="f-name" type="text" placeholder="예) 양대방">
+          </div>
+          <div class="field">
+            <label for="f-birth">생년월일</label>
+            <input id="f-birth" type="date" placeholder="YYYY-MM-DD">
+          </div>
+        </div>
+
+        <div class="field-row">
+          <div class="field">
+            <label for="f-dong">동</label>
+            <input id="f-dong" type="text" placeholder="예) 101">
+          </div>
+          <div class="field">
+            <label for="f-ho">호</label>
+            <input id="f-ho" type="text" placeholder="예) 102">
+          </div>
+        </div>
+
+        <div class="field">
+          <label>인증대상</label>
+          <div class="radiogroup" id="ownerToggle">
+            <label class="radiopill checked"><input type="radio" name="owner" value="contract" checked>계약자</label>
+            <label class="radiopill"><input type="radio" name="owner" value="joint">공동명의자</label>
+          </div>
+        </div>
+
+        <div class="field">
+          <label for="f-phone">휴대폰 번호 (본인 명의)</label>
+          <input id="f-phone" type="tel" placeholder="숫자만 입력">
+        </div>
+
+        <div class="form-error" id="stepOneError"></div>
+        <button type="button" class="btn btn-primary" id="sendCodeBtn">인증번호 발송</button>
+
+        <div class="otp-box" id="otpBox" hidden>
+          <div class="field" style="margin-top:0;">
+            <label for="f-otp">인증번호 6자리</label>
+            <input id="f-otp" type="text" inputmode="numeric" maxlength="6" placeholder="데모 인증번호: 1">
+          </div>
+          <div class="demo-note" id="otpDemoNote"></div>
+          <div class="form-error" id="stepTwoError"></div>
+          <button type="button" class="btn btn-gold" id="verifyBtn" style="margin-top:14px;">인증확인 및 조회</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ============ RESULT VIEW ============ -->
+  <div id="resultView" hidden>
+    <div class="toolrow">
+      <button type="button" class="btn btn-ghost" id="backBtn">← 다른 계약 조회</button>
+      <button type="button" class="btn btn-ghost" id="printBtn">인쇄 / PDF 저장</button>
+    </div>
+
+    <div class="doctitle">
+      <h1>납&nbsp;&nbsp;입&nbsp;&nbsp;정&nbsp;&nbsp;산&nbsp;&nbsp;서</h1>
+      <div class="asof">기준일자 : <span id="asofDate"></span></div>
+    </div>
+    <div class="formula-note">총계약금액 = 분양금 합계 + 셀프(별도계약)합계</div>
+
+    <div class="hero">
+      <div class="tile">
+        <div class="k">총계약금액</div>
+        <div class="v" id="heroTotal"></div>
+      </div>
+      <div class="tile">
+        <div class="k">납입금 총액</div>
+        <div class="v sage" id="heroPaid"></div>
+      </div>
+      <div class="tile">
+        <div class="k">미납금 총액</div>
+        <div class="v gold" id="heroUnpaid"></div>
+      </div>
+      <div class="tile">
+        <div class="k">납입 진행률</div>
+        <div class="v" id="heroPct"></div>
+        <div class="progress"><span id="heroBar" style="width:0%"></span></div>
+      </div>
+    </div>
+
+    <div class="section">
+      <h2><span class="num">1</span>계약 기본정보</h2>
+      <div class="infogrid" id="infoGrid"></div>
+    </div>
+
+    <div class="section">
+      <h2><span class="num">2</span>마감자재 사양</h2>
+      <p class="desc">원본 정산서의 서술형 마감자재 항목을 구분·사양별 표로 재구성했습니다.</p>
+      <div class="tablewrap">
+        <table class="spec">
+          <thead><tr><th style="width:34%">구분</th><th>사양 / 내용</th></tr></thead>
+          <tbody id="specBody"></tbody>
+        </table>
+      </div>
+      <div class="spec-foot">※ 원본 &lsquo;마감자재&rsquo; 텍스트를 항목 단위로 분리해 표시한 것으로, 계약서상 사양과 동일합니다.</div>
+    </div>
+
+    <div class="section">
+      <h2><span class="num">3</span>정산금액 현황 <span style="font-weight:400;color:var(--muted);font-size:12px;">(약정금액 기준 · 분양금)</span></h2>
+      <div class="tablewrap">
+        <table class="grid" id="scheduleTable">
+          <thead>
+            <tr>
+              <th>구분</th><th>약정일자</th><th class="num">약정금액</th><th class="num">부가세액</th>
+              <th>납입일자</th><th class="num">납입금액</th><th class="mid">경과일수</th>
+              <th class="num">할인금액</th><th class="num">연체금액</th><th class="num">실납입금액</th><th class="mid">대출</th>
+            </tr>
+          </thead>
+          <tbody id="scheduleBody"></tbody>
+        </table>
+      </div>
+      <div class="summarybox">
+        <div class="sumcard">
+          <h3>부가세 제외 (토지가+건물가)</h3>
+          <div class="sumrow"><span>약정금액</span><span id="s1a"></span></div>
+          <div class="sumrow"><span>할인금액</span><span id="s1b"></span></div>
+          <div class="sumrow strong"><span>실납입금액</span><span class="v" id="s1c"></span></div>
+        </div>
+        <div class="sumcard">
+          <h3>분양금 납입 요약</h3>
+          <div class="sumrow"><span>납입금 총액</span><span id="s2a"></span></div>
+          <div class="sumrow"><span>연체료 총액</span><span id="s2b"></span></div>
+          <div class="sumrow strong"><span>미납금(납부할 금액)</span><span class="v" id="s2c"></span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section">
+      <h2><span class="num">4</span>별도계약 품목납입 현황</h2>
+      <p class="desc">발코니 확장, 시스템에어컨 등 유상 옵션 계약 건의 납입 현황입니다.</p>
+      <div class="tablewrap">
+        <table class="grid" id="extraTable">
+          <thead>
+            <tr>
+              <th>품목명</th><th>구분</th><th>약정일자</th><th class="num">약정금액</th><th class="num">부가세</th>
+              <th>납입일자</th><th class="num">납입금액</th><th class="mid">경과일수</th><th class="num">할인금액</th>
+              <th class="num">연체금액</th><th class="num">실납입금액</th>
+            </tr>
+          </thead>
+          <tbody id="extraBody"></tbody>
+        </table>
+      </div>
+      <div class="summarybox">
+        <div class="sumcard">
+          <h3>별도계약 납입 요약</h3>
+          <div class="sumrow"><span>납입금 총액</span><span id="e1a"></span></div>
+          <div class="sumrow"><span>연체료 총액</span><span id="e1b"></span></div>
+          <div class="sumrow strong"><span>미납금(납부할 금액)</span><span class="v" id="e1c"></span></div>
+        </div>
+        <div class="sumcard">
+          <h3>안내</h3>
+          <div style="font-size:12.5px;color:var(--muted);line-height:1.6;">
+            별도계약 품목의 세부 사양은 상단 &lsquo;마감자재 사양&rsquo; 표를 참고하시기 바라며, 문의사항은 담당 영업소로 연락 부탁드립니다.
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <footer class="wrap">
+    대방산업개발 사내 프로토타입 · 실제 문자 인증 없이 화면에 인증번호를 표시하는 데모 화면입니다.
+  </footer>
+</main>
+
+<script>
+(function(){
+  "use strict";
+
+  var RECORD = {
+    site: "시흥거모1차(S-2BL) 아파트(S22019A01)",
+    dongho: "101 - 102",
+    name: "양대방",
+    birthCode: "900104",
+    birthISO: "1990-01-04",
+    jointName: "",
+    pyeong: "33.3323",
+    contractDate: "2026-04-28",
+    moveInDate: "",
+    landPrice: 216972034,
+    bldgPrice: 350997966,
+    vat: 0,
+    totalPrice: 567970000,
+    landArea: "57.3541",
+    exclusiveArea: "84.9584",
+    commonArea: "25.2310",
+    etcCommonArea: "8.5746",
+    excessArea: "0.0000",
+    overpaid: 0,
+    supplyArea: "110.1894",
+    saleArea: "182.0433",
+
+    specRows: [
+      ["발코니 확장", "발코니 확장 (거실 + 침실 전체)"],
+      ["시스템에어컨 일반형", "(유상) [옵션1] 침실2 + 침실3 + 침실4 (6대)"],
+      ["현관 중문", "3연동 슬라이딩 중문"],
+      ["현관 벽체", "브론즈경 + 가구 FIX 판넬"],
+      ["현관 팬트리", "가구도어 + 시스템가구(포스트형) 설치"],
+      ["거실 바닥", "합판마루 90폭"],
+      ["거실 월패드", "10인치 월패드"],
+      ["거실 아트월", "평판형 아트월"],
+      ["침실 2, 3 벽면", "침실2 + 침실3 분리형"]
+    ],
+
+    schedule: [
+      ["1차 계약금","2026-04-28",1000000,0,"2026-04-28",1000000,0,0,0,1000000,false],
+      ["2차 계약금","2026-05-05",27398500,0,"2026-04-29",27398500,6,0,0,27398500,false],
+      ["3차 계약금","2026-07-02",28398500,0,"2026-07-02",28398500,0,0,0,28398500,true],
+      ["1차 중도금","2026-09-30",56797000,0,null,0,0,0,0,0,false],
+      ["2차 중도금","2026-09-30",56797000,0,null,0,0,0,0,0,false],
+      ["3차 중도금","2026-10-31",56797000,0,null,0,0,0,0,0,false],
+      ["4차 중도금","2027-08-31",56797000,0,null,0,0,0,0,0,false],
+      ["5차 중도금","2027-11-30",56797000,0,null,0,0,0,0,0,false],
+      ["6차 중도금","2028-02-29",56797000,0,null,0,0,0,0,0,false],
+      ["1차 잔금","2028-08-31",170391000,0,null,0,0,0,0,0,false]
+    ],
+    scheduleTotals:{contract:567970000, vat:0, paid:56797000, discount:0, overdue:0, real:56797000},
+    exVatContract:567970000, exVatDiscount:0, exVatReal:56797000,
+    paidTotal:56797000, unpaidTotal:511173000, overdueTotal:0, dueTotal:511173000,
+
+    extra: [
+      ["발코니 확장","1차 계약금","2026-04-28",1000000,90910,"2026-04-28",1000000,0,0,0,1000000],
+      ["발코니 확장","1차 잔금","2028-08-31",7130000,648181,null,0,0,0,0,0],
+      ["조명 거실 조명","1차 계약금","2026-04-28",200000,18182,"2026-04-28",200000,0,0,0,200000],
+      ["조명 거실 조명","1차 잔금","2028-08-31",2170000,197273,null,0,0,0,0,0],
+      ["현관 중문","1차 계약금","2026-08-27",100000,9091,"2026-08-27",100000,0,0,0,100000],
+      ["현관 중문","1차 잔금","2028-08-31",1000000,90909,null,0,0,0,0,0],
+      ["시스템에어컨 일반형","1차 계약금","2026-08-27",1000000,90910,"2026-08-27",1000000,0,0,0,1000000],
+      ["시스템에어컨 일반형","1차 잔금","2028-08-31",6940000,630909,null,0,0,0,0,0]
+    ],
+    extraTotals:{contract:19540000, vat:1776365, paid:2300000, discount:0, overdue:0, real:2300000},
+    extraPaid:2300000, extraUnpaid:17240000, extraOverdue:0, extraDue:17240000
+  };
+
+  function won(n){
+    if(n===null||n===undefined) return "-";
+    return n.toLocaleString("ko-KR")+"원";
+  }
+  function wonPlain(n){ return n.toLocaleString("ko-KR"); }
+  function m2(v){ return v+"㎡"; } // ㎡
+
+  var otpCode = null;
+  var currentOwnerMode = "contract";
+
+  var ownerRadios = document.querySelectorAll('#ownerToggle input[name="owner"]');
+  ownerRadios.forEach(function(r){
+    r.addEventListener('change', function(){
+      currentOwnerMode = r.value;
+      document.querySelectorAll('.radiopill').forEach(function(p){p.classList.remove('checked');});
+      r.closest('.radiopill').classList.add('checked');
+    });
+  });
+
+  function showError(el, msg){
+    el.textContent = msg;
+    el.classList.add('show');
+  }
+  function clearError(el){
+    el.textContent = "";
+    el.classList.remove('show');
+  }
+
+  document.getElementById('sendCodeBtn').addEventListener('click', function(){
+    var err = document.getElementById('stepOneError');
+    clearError(err);
+
+    var name = document.getElementById('f-name').value.trim();
+    var birth = document.getElementById('f-birth').value.trim();
+    var dong = document.getElementById('f-dong').value.trim();
+    var ho = document.getElementById('f-ho').value.trim();
+    var phone = document.getElementById('f-phone').value.trim();
+
+    if(!name || !birth || !dong || !ho || !phone){
+      showError(err, "모든 항목을 입력해 주세요.");
+      return;
+    }
+    if(currentOwnerMode === "joint" && !RECORD.jointName){
+      showError(err, "해당 계약 건은 공동명의자 정보가 등록되어 있지 않습니다. ‘계약자’로 다시 시도해 주세요.");
+      return;
+    }
+    var dongRef = RECORD.dongho.split('-')[0].trim().replace(/^0+/,'');
+    var hoRef = RECORD.dongho.split('-')[1].trim().replace(/^0+/,'');
+    var dongOk = dong.replace(/^0+/,'') === dongRef;
+    var hoOk = ho.replace(/^0+/,'') === hoRef;
+    var nameOk = name === RECORD.name;
+    var birthOk = birth === RECORD.birthISO;
+
+    if(!(nameOk && birthOk && dongOk && hoOk)){
+      showError(err, "입력하신 정보와 일치하는 계약 건을 찾을 수 없습니다. (데모 계정: 양대방 / 1990-01-04 / 101동 102호)");
+      return;
+    }
+
+    otpCode = "1";
+    document.getElementById('otpBox').hidden = false;
+    var note = document.getElementById('otpDemoNote');
+    note.innerHTML = "<b>[데모 모드]</b> 실제 서비스에서는 " + phone + " 번호로 인증번호가 문자 발송됩니다. 이 화면은 데모용으로, 인증번호란에 <b>1</b> 을 입력하면 통과됩니다.";
+    document.getElementById('f-otp').focus();
+  });
+
+  document.getElementById('verifyBtn').addEventListener('click', function(){
+    var err = document.getElementById('stepTwoError');
+    clearError(err);
+    var val = document.getElementById('f-otp').value.trim();
+    if(val !== otpCode){
+      showError(err, "인증번호가 일치하지 않습니다.");
+      return;
+    }
+    renderResult();
+    document.getElementById('searchView').hidden = true;
+    document.getElementById('resultView').hidden = false;
+    window.scrollTo({top:0,behavior:'instant'});
+  });
+
+  document.getElementById('backBtn').addEventListener('click', function(){
+    document.getElementById('resultView').hidden = true;
+    document.getElementById('searchView').hidden = false;
+    document.getElementById('otpBox').hidden = true;
+    document.getElementById('f-otp').value = "";
+    otpCode = null;
+  });
+
+  document.getElementById('printBtn').addEventListener('click', function(){
+    window.print();
+  });
+
+  function todayISO(){
+    var d = new Date();
+    var mm = String(d.getMonth()+1).padStart(2,'0');
+    var dd = String(d.getDate()).padStart(2,'0');
+    return d.getFullYear()+"-"+mm+"-"+dd;
+  }
+
+  function renderResult(){
+    document.getElementById('asofDate').textContent = todayISO();
+    document.getElementById('heroTotal').textContent = won(RECORD.totalPrice);
+    document.getElementById('heroPaid').textContent = won(RECORD.paidTotal + RECORD.extraPaid);
+    document.getElementById('heroUnpaid').textContent = won(RECORD.unpaidTotal + RECORD.extraUnpaid);
+    var pct = ((RECORD.paidTotal+RECORD.extraPaid) / (RECORD.totalPrice+RECORD.extraTotals.contract) * 100);
+    document.getElementById('heroPct').textContent = pct.toFixed(1)+"%";
+    document.getElementById('heroBar').style.width = Math.min(100,pct).toFixed(1)+"%";
+
+    var cells = [
+      ["사업지명", RECORD.site, true],
+      ["동 / 호", RECORD.dongho],
+      ["성명", RECORD.name],
+      ["주민등록번호", RECORD.birthCode + "-●●●●●●●"],
+      ["공동명의", RECORD.jointName || "-"],
+      ["평형", RECORD.pyeong],
+      ["계약일자", RECORD.contractDate],
+      ["입주일자", RECORD.moveInDate || "-"],
+      ["토지가액", won(RECORD.landPrice)],
+      ["대지면적", m2(RECORD.landArea)],
+      ["과오납금액", won(RECORD.overpaid)],
+      ["건물가액", won(RECORD.bldgPrice)],
+      ["전용면적", m2(RECORD.exclusiveArea)],
+      ["기타공용면적", m2(RECORD.etcCommonArea)],
+      ["부가세액", won(RECORD.vat)],
+      ["주거공용면적", m2(RECORD.commonArea)],
+      ["초과지하면적", m2(RECORD.excessArea)],
+      ["총계약금액", won(RECORD.totalPrice), true],
+      ["공급면적", m2(RECORD.supplyArea)],
+      ["분양면적", m2(RECORD.saleArea)]
+    ];
+    var grid = document.getElementById('infoGrid');
+    grid.innerHTML = cells.map(function(c){
+      return '<div class="cell'+(c[2]?' wide':'')+'"><div class="k">'+c[0]+'</div><div class="v">'+c[1]+'</div></div>';
+    }).join('');
+
+    var specBody = document.getElementById('specBody');
+    specBody.innerHTML = RECORD.specRows.map(function(r){
+      return '<tr><td class="cat">'+r[0]+'</td><td>'+r[1]+'</td></tr>';
+    }).join('');
+
+    var schedBody = document.getElementById('scheduleBody');
+    schedBody.innerHTML = RECORD.schedule.map(function(r){
+      return '<tr>'+
+        '<td>'+r[0]+'</td>'+
+        '<td>'+r[1]+'</td>'+
+        '<td class="num">'+wonPlain(r[2])+'</td>'+
+        '<td class="num'+(r[3]===0?' zero':'')+'">'+wonPlain(r[3])+'</td>'+
+        '<td class="mid'+(r[4]?'':' zero')+'">'+(r[4]||'-')+'</td>'+
+        '<td class="num'+(r[5]===0?' zero':'')+'">'+wonPlain(r[5])+'</td>'+
+        '<td class="mid'+(r[6]?'':' zero')+'">'+(r[6]||0)+'</td>'+
+        '<td class="num zero">'+wonPlain(r[7])+'</td>'+
+        '<td class="num zero">'+wonPlain(r[8])+'</td>'+
+        '<td class="num">'+wonPlain(r[9])+'</td>'+
+        '<td class="mid">'+(r[10]?'<span class="badge-loan">◎</span>':'')+'</td>'+
+      '</tr>';
+    }).join('') +
+      '<tr class="total"><td colspan="2">합&nbsp;&nbsp;계</td>'+
+      '<td class="num">'+wonPlain(RECORD.scheduleTotals.contract)+'</td>'+
+      '<td class="num">'+wonPlain(RECORD.scheduleTotals.vat)+'</td>'+
+      '<td></td>'+
+      '<td class="num">'+wonPlain(RECORD.scheduleTotals.paid)+'</td>'+
+      '<td></td>'+
+      '<td class="num">'+wonPlain(RECORD.scheduleTotals.discount)+'</td>'+
+      '<td class="num">'+wonPlain(RECORD.scheduleTotals.overdue)+'</td>'+
+      '<td class="num">'+wonPlain(RECORD.scheduleTotals.real)+'</td>'+
+      '<td></td></tr>';
+
+    document.getElementById('s1a').textContent = won(RECORD.exVatContract);
+    document.getElementById('s1b').textContent = won(RECORD.exVatDiscount);
+    document.getElementById('s1c').textContent = won(RECORD.exVatReal);
+    document.getElementById('s2a').textContent = won(RECORD.paidTotal);
+    document.getElementById('s2b').textContent = won(RECORD.overdueTotal);
+    document.getElementById('s2c').textContent = won(RECORD.unpaidTotal);
+
+    var extraBody = document.getElementById('extraBody');
+    extraBody.innerHTML = RECORD.extra.map(function(r){
+      return '<tr>'+
+        '<td>'+r[0]+'</td>'+
+        '<td>'+r[1]+'</td>'+
+        '<td>'+r[2]+'</td>'+
+        '<td class="num">'+wonPlain(r[3])+'</td>'+
+        '<td class="num">'+wonPlain(r[4])+'</td>'+
+        '<td class="mid'+(r[5]?'':' zero')+'">'+(r[5]||'-')+'</td>'+
+        '<td class="num'+(r[6]===0?' zero':'')+'">'+wonPlain(r[6])+'</td>'+
+        '<td class="mid zero">'+r[7]+'</td>'+
+        '<td class="num zero">'+wonPlain(r[8])+'</td>'+
+        '<td class="num zero">'+wonPlain(r[9])+'</td>'+
+        '<td class="num">'+wonPlain(r[10])+'</td>'+
+      '</tr>';
+    }).join('') +
+      '<tr class="total"><td colspan="3">합&nbsp;&nbsp;계</td>'+
+      '<td class="num">'+wonPlain(RECORD.extraTotals.contract)+'</td>'+
+      '<td class="num">'+wonPlain(RECORD.extraTotals.vat)+'</td>'+
+      '<td></td>'+
+      '<td class="num">'+wonPlain(RECORD.extraTotals.paid)+'</td>'+
+      '<td></td>'+
+      '<td class="num">'+wonPlain(RECORD.extraTotals.discount)+'</td>'+
+      '<td class="num">'+wonPlain(RECORD.extraTotals.overdue)+'</td>'+
+      '<td class="num">'+wonPlain(RECORD.extraTotals.real)+'</td></tr>';
+
+    document.getElementById('e1a').textContent = won(RECORD.extraPaid);
+    document.getElementById('e1b').textContent = won(RECORD.extraOverdue);
+    document.getElementById('e1c').textContent = won(RECORD.extraUnpaid);
+  }
+})();
+</script>
+</body>
+</html>
